@@ -64,10 +64,3 @@ This table captures device and app performance metrics and allows analysis of re
 * `dim_date`
 * `dim_car`
 * `dim_driver`
-
-These shared (conformed) dimensions ensure consistent reporting across both fact tables.
-
----
-
-This dimensional model captures both fleet tracking and device health processes in a unified star schema. It supports historical analysis, monitoring, and performance evaluation of vehicles, drivers, and application devices.
-
