@@ -1,0 +1,3 @@
+# Authors of home assignment (one line per student; overwrite values)
+- 536101, Vašek, Robert
+- 524638, Plhal, Jakub
