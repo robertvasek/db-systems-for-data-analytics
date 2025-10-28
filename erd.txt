@@ -1,0 +1,73 @@
+Here’s your version rewritten to match that exact structure and tone — concise, clean, and consistent in formatting and style for `erd.txt`:
+
+---
+
+# Task C: Dimensional Model Description
+
+![ERD of star schema](erd.png)
+
+## Fact tables
+
+Based on the relational schema and input data, we identified two main business processes represented by two fact tables: **F_TRACKING** and **F_HEALTH**.
+
+---
+
+### fact_tracking
+
+* type: transaction fact
+* grain: one record per GPS tracking event for a given car, driver, and timestamp
+* primary key: combination of foreign keys from related dimensions and `pos_key` (degenerate dimension)
+* measures:
+
+  * distance – additive
+  * driving_time – additive
+  * speed – non-additive
+
+This table stores all movement and status events from GPS tracking and is used to analyze vehicle activity and utilization over time.
+
+---
+
+### fact_health
+
+* type: snapshot fact
+* grain: one record per application/device health ping for a given car, driver, and timestamp
+* primary key: combination of foreign keys from related dimensions and `service_key` (degenerate dimension)
+* measures:
+
+  * app_run_time – semi-additive
+  * dev_run_time_hr – semi-additive
+  * battery_level_pct – non-additive
+
+This table captures device and app performance metrics and allows analysis of reliability, uptime, and battery behavior.
+
+---
+
+## Dimensions
+
+* **dim_date** – static calendar dimension with attributes such as year, month, day, and weekday indicators.
+* **dim_car** – vehicle attributes (license_plate, make, color, type, tonnage) with denormalized company data (company_name, city, country, region).
+* **dim_driver** – driver details including company assignment; can change over time (SCD2).
+* **dim_track_status** – decodes tracking codes (M, _, =, *, #, X, F) into human-readable states.
+* **dim_device** – device metadata such as name or manufacturer; can change over time (SCD2).
+
+---
+
+### Degenerate dimensions
+
+* `pos_key` (for tracking)
+* `service_key` (for health)
+
+---
+
+### Shared dimensions
+
+* `dim_date`
+* `dim_car`
+* `dim_driver`
+
+These shared (conformed) dimensions ensure consistent reporting across both fact tables.
+
+---
+
+This dimensional model captures both fleet tracking and device health processes in a unified star schema. It supports historical analysis, monitoring, and performance evaluation of vehicles, drivers, and application devices.
+
