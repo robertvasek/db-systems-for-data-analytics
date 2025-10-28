@@ -83,8 +83,7 @@
 
 
 ### Health vs. tracking timeline alignment
-12 rows - is tracking but no health data
-11 rows - health data but no tracking
+54 rows - tracking record was made on particular car and within 30min after that there was no health report
 
 
 ### Speed vs. distance vs. truck status sanity check
@@ -96,9 +95,6 @@
 
 
 ### Battery vs. uptime plausibility
-
-
-
-
-
+there were sudden battery drops in 3 cases, where battery dropped by 22, 43 and 86% in very short timeframe (~15min)
+on devices AMN-LX9 and Redmi Go
 
