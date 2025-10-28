@@ -3,6 +3,35 @@
 ### staging.car_info
 - Total number of records: 32
 
+<Car_key>
+- unique values: 32
+- inconsistencies:
+   none
+
+<Company_key>
+- unique values: 6; 76687, 411060, 122349, 59279, 85561, 111945
+- inconsistencies:
+   none
+
+<License_plate>
+- unique values: 32
+- inconsistencies:
+   format is not unified (sometimes there is "-" after 3 chars and sometimes not)
+   proposed is format checking
+
+<Make>
+- unique values: 8 + null; DAF, MAN, Peugeot, Volvo, Scania, Fiat, "", -------
+- inconsistencies: 
+   null values, missing values
+   column name could be improved -> manufacturer
+   rather foreign key should be used for referencing of manufacturer (it should be separate table) or enum
+
+<Color>
+- unique values: 22, it's hex format / plain text
+- inconsistencies:
+   there's 5 missing values
+   values are not unified (rgb vs plain text)
+
 <Tonnage>
 - unique values: 15, it's a number
 - inconsistencies: 
@@ -13,28 +42,10 @@
 <Type>
 - unique values: 7; N, V, T, W, J, E, K
 - inconsistencies: 
-   values have unclear meaning, they should be mapped to some more clear descriptions
+   values have unclear meaning on first sight, rather should be enum
    name of the column should be improved (type is also reserved word)
    legend says different abbreviations for some car types (there is V, W, N, P, D, X, L)
 
-<Color>
-- unique values: 22, it's hex format spectrum / plain text
-- inconsistencies:
-   there's 5 missing values
-   values are not unified (rgb vs plain text)
-
-<Make>
-- unique values: 8 + null; DAF, MAN, Peugeot, Volvo, Scania, Fiat, "", -------
-- inconsistencies: 
-   null values, missing values
-   column name could be improved -> manufacturer
-   rather foreign key should be used for referencing of manufacturer (it should be separate table)
-
-<License_plate>
-- unique values: 32, all
-- inconsistencies:
-   format is not unified (sometimes there is "-" after 3 chars and sometimes not)
-   proposed is format checking
 
 
 ### staging.import_tracking
