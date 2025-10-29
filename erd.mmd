@@ -1,31 +1,26 @@
 erDiagram
-  AppHealth_Fact {
+  Fact_Health {
       int    service_key PK
       int    date_key FK
       int    time_key FK
       int    car_key FK
       int    driver_key FK
-      int    company_key FK
-      int    operator_key FK
       int    device_key FK
-      numeric battery_level
-      numeric app_run_time
-      numeric dev_run_time
-      string  pos_gps
+      numeric battery_level_pct
+      numeric app_run_time_hr
+      numeric dev_run_time_hr
   }
 
-  Tracking_Fact {
+  Fact_Tracking {
       int    pos_key PK
       int    date_key FK
       int    time_key FK
       int    car_key FK
       int    driver_key FK
-      int    company_key FK
       int    truck_status_key FK
       numeric distance
       numeric driving_time
       numeric speed
-      string  pos_gps
   }
 
   Date_Dim {
@@ -45,33 +40,22 @@ erDiagram
       int    second
   }
 
-  Company_Dim {
-      int    company_key PK
-      string company_name
-      string city
-      string country
-      string region_code
-  }
-
   Car_Dim {
       int    car_key PK
       string license_plate
       string make
+      string color
       string type
       numeric tonnage
+      string company_name
+      string company_city
+      string company_country
+      string company_region_code
   }
 
   Driver_Dim {
       int    driver_key PK
       string driver_name
-  }
-
-  Operator_Dim {
-      int    operator_key PK
-      int    mcc
-      int    mnc
-      string network
-      string country
   }
 
   Device_Dim {
@@ -86,18 +70,14 @@ erDiagram
   }
 
   %% ========= RELATIONSHIPS =========
-  AppHealth_Fact }o--|| Date_Dim        : "date_key"
-  AppHealth_Fact }o--|| Time_Dim        : "time_key"
-  AppHealth_Fact }o--|| Car_Dim         : "car_key"
-  AppHealth_Fact }o--|| Driver_Dim      : "driver_key"
-  AppHealth_Fact }o--|| Company_Dim     : "company_key"
-  AppHealth_Fact }o--|| Operator_Dim    : "operator_key"
-  AppHealth_Fact }o--|| Device_Dim      : "device_key"
+  Fact_Health     }o--|| Date_Dim        : "date_key"
+  Fact_Health     }o--|| Time_Dim        : "time_key"
+  Fact_Health     }o--|| Car_Dim         : "car_key"
+  Fact_Health     }o--|| Driver_Dim      : "driver_key"
+  Fact_Health     }o--|| Device_Dim      : "device_key"
 
-  Tracking_Fact   }o--|| Date_Dim       : "date_key"
-  Tracking_Fact   }o--|| Time_Dim       : "time_key"
-  Tracking_Fact   }o--|| Car_Dim        : "car_key"
-  Tracking_Fact   }o--|| Driver_Dim     : "driver_key"
-  Tracking_Fact   }o--|| Company_Dim    : "company_key"
-  Tracking_Fact   }o--|| TruckStatus_Dim: "truck_status_key"
-
+  Fact_Tracking   }o--|| Date_Dim        : "date_key"
+  Fact_Tracking   }o--|| Time_Dim        : "time_key"
+  Fact_Tracking   }o--|| Car_Dim         : "car_key"
+  Fact_Tracking   }o--|| Driver_Dim      : "driver_key"
+  Fact_Tracking   }o--|| TruckStatus_Dim : "truck_status_key"
