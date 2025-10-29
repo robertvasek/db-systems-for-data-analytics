@@ -1,0 +1,87 @@
+erDiagram
+  Fact_Health {
+      int    service_key PK
+      int    date_key FK
+      int    time_key FK
+      int    car_key FK
+      int    driver_key FK
+      int    device_key FK
+      numeric battery_level_pct
+      numeric app_run_time_hr
+      numeric dev_run_time_hr
+  }
+
+  Fact_Tracking {
+      int    pos_key PK
+      int    date_key FK
+      int    time_key FK
+      int    car_key FK
+      int    driver_key FK
+      int    truck_status_key FK
+      numeric distance
+      numeric driving_time
+      numeric speed
+  }
+
+  Date_Dim {
+      int    date_key PK
+      date   calendar_date
+      int    year
+      int    month
+      int    day
+      string day_of_week
+      boolean is_weekend
+  }
+
+  Time_Dim {
+      int    time_key PK
+      int    hour
+      int    minute
+      int    second
+  }
+
+  Car_Dim {
+      int    car_key PK
+      string license_plate
+      string make
+      string color
+      string type
+      numeric tonnage
+      string company_name
+      string company_city
+      string company_country
+      string company_region_code
+  }
+
+  Driver_Dim {
+      int    driver_key PK
+      string driver_name
+      string company_name
+      string company_city
+      string company_country
+      string company_region_code
+  }
+
+  Device_Dim {
+      int    device_key PK
+      string device_name
+  }
+
+  TruckStatus_Dim {
+      int    truck_status_key PK
+      string status_code 
+      string status_label
+  }
+
+  %% ========= RELATIONSHIPS =========
+  Fact_Health     }o--|| Date_Dim        : "date_key"
+  Fact_Health     }o--|| Time_Dim        : "time_key"
+  Fact_Health     }o--|| Car_Dim         : "car_key"
+  Fact_Health     }o--|| Driver_Dim      : "driver_key"
+  Fact_Health     }o--|| Device_Dim      : "device_key"
+
+  Fact_Tracking   }o--|| Date_Dim        : "date_key"
+  Fact_Tracking   }o--|| Time_Dim        : "time_key"
+  Fact_Tracking   }o--|| Car_Dim         : "car_key"
+  Fact_Tracking   }o--|| Driver_Dim      : "driver_key"
+  Fact_Tracking   }o--|| TruckStatus_Dim : "truck_status_key"
