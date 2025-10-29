@@ -33,7 +33,7 @@
    values are not unified (rgb vs plain text)
 
 <Tonnage>
-- unique values: 15, it's a number
+- unique values: 15
 - inconsistencies: 
    there's a lot of zeros (every car is supposed to have some kind of tonnage)
    the value units are not unified (kilos vs tons)
@@ -46,41 +46,64 @@
    name of the column should be improved (type is also reserved word)
    legend says different abbreviations for some car types (there is V, W, N, P, D, X, L)
 
-
+--------------------------------------------------------------------------------------------------
 
 ### staging.import_tracking
 - Total number of records: 120036
 - Total unique cars: 32
 - Total unique drivers: 40 (+ null)
 
+<Pos_key>
+- unique values: 120036
+- inconsistencies:
+   none
+
+<Car_key>
+- unique values: 32
+- inconsistencies:
+   none
+
 <Driver_key>
 - unique values: 40 + null (valid from driver_info table)
 - inconsistencies: 
    There is 212 missing values (nulls)
 
+<Time>
+- unique values: 118205
+- inconsistencies:
+   in best scenario we would not use "time" as a name for the column, since it's a reserved word in sql
+   unification of the timezone is also important, but it varies based on purpose of the information
+
 <Truck_status>
 - unique values: 7; #, *, X, =, _, M, F
 - inconsistency:
-   naming is odd. proposed is to make either better naming which is clear or
+   naming of the values is odd. proposed is to make either better naming which is clear or enum or
    introduce new table truck_status with id and better description inside
 
+<Pos_gps>
+- unique value: db throws this: could not identify an equality operator for type point; so unique values can be all (120036)
+- inconsistencies:
+   none (format is guarded by type safety)
+
 <Speed>
-- unique values: 1534, it's a number
+- unique values: 1534
 - inconsistency:
    ideally when status is M, speed should not be 0 (for 658 rows this is not true, more on this in cross-table consistency)
-   107 rows - speed is higher then 160 (potentially incorrect measurement)   
+   107 rows - speed is higher then 160 (potentially incorrect measurement, not necessarily an inconsistence, but worth mentioning)   
 
 <Distance>
-- unique values: 1437, it's a number
--inconsistency:
+- unique values: 1437
+- inconsistency:
+   we found weirdly long drives, there's 6 rows which show travel distance longer then 500km (634.49, 566.44, 635.44, 625.74, 616.53, 792.71)
+	<- not necessarily an inconsistence, but worth mentioning
    more in this in cross table consistency
 
 <Driving_time>
-- unique values: 5545, it's a number
+- unique values: 5545
 - inconsistency:
    more in this in cross table consistency
-   unification of timezone is also important, but it varies based on purpose of the information
-
+   we found 20 rows, where status is M (moving) and driving time is over 36000 (10hrs), we found this odd
+	<- not necessarily an inconsistence, but worth mentioning
 
 ### Health vs. tracking timeline alignment
 54 rows - tracking record was made on particular car and within 30min after that there was no health report
@@ -95,6 +118,6 @@
 
 
 ### Battery vs. uptime plausibility
-there were sudden battery drops in 3 cases, where battery dropped by 22, 43 and 86% in very short timeframe (~15min)
+3 rows - there were sudden battery drops; battery dropped by 22, 43 and 86% in very short timeframe (~15min)
 on devices AMN-LX9 and Redmi Go
 
