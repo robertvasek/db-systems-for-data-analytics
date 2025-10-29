@@ -4,11 +4,11 @@
 
 ## Fact tables
 
-Based on the relational schema and input data, we identified two main business processes represented by two fact tables: **AppHealth_Fact** and **Tracking_Fact**.
+Based on the relational schema and input data, we identified two main business processes represented by two fact tables: **Fact_Health** and **Fact_Tracking**.
 
 ---
 
-### Tracking_Fact
+### Fact_Tracking
 
 * type: transaction fact
 * grain: one record per GPS tracking event for a given car, driver, and timestamp
@@ -23,16 +23,16 @@ This table stores all movement and status events from GPS tracking and is used t
 
 ---
 
-### AppHealth_Fact
+### Fact_Health
 
 * type: snapshot fact
 * grain: one record per application/device health ping for a given car, driver, and timestamp
 * primary key: `service_key` (degenerate dimension serving as unique identifier)
 * measures:
 
-  * battery_level – non-additive
-  * app_run_time – semi-additive
-  * dev_run_time – semi-additive
+  * battery_level_pct – non-additive
+  * app_run_time_hr – semi-additive
+  * dev_run_time_hr – semi-additive
 
 This table captures device and app performance metrics and allows analysis of reliability, uptime, and battery behavior.
 
@@ -42,10 +42,8 @@ This table captures device and app performance metrics and allows analysis of re
 
 * **Date_Dim** – static calendar dimension with attributes such as calendar_date, year, month, day, day_of_week, and is_weekend indicator.
 * **Time_Dim** – time-of-day dimension with hour, minute, and second attributes for precise temporal analysis.
-* **Car_Dim** – vehicle attributes including license_plate, make, type, and tonnage.
-* **Driver_Dim** – driver details; can change over time (SCD Type 2).
-* **Company_Dim** – company information including company_name, city, country, and region_code.
-* **Operator_Dim** – mobile network operator details with mcc (mobile country code), mnc (mobile network code), network name, and country.
+* **Car_Dim** – vehicle attributes including license_plate, make, color, type, and tonnage, with denormalized company data (company_name, company_city, company_country, company_region_code).
+* **Driver_Dim** – driver details with denormalized company data (company_name, company_city, company_country, company_region_code); can change over time (SCD Type 2).
 * **Device_Dim** – device metadata such as device_name; can change over time (SCD Type 2).
 * **TruckStatus_Dim** – decodes tracking status codes (M, _, =, *, #, X, F) into human-readable status_code and status_label.
 
@@ -53,9 +51,8 @@ This table captures device and app performance metrics and allows analysis of re
 
 ### Degenerate dimensions
 
-* `pos_key` (for Tracking_Fact) – serves as primary key and business identifier
-* `service_key` (for AppHealth_Fact) – serves as primary key and business identifier
-* `pos_gps` (in both fact tables) – GPS coordinates stored as contextual information
+* `pos_key` (for Fact_Tracking) – serves as primary key and business identifier
+* `service_key` (for Fact_Health) – serves as primary key and business identifier
 
 ---
 
@@ -63,31 +60,23 @@ This table captures device and app performance metrics and allows analysis of re
 
 * `Date_Dim`
 * `Time_Dim`
-* `Car_Dim`
-* `Driver_Dim`
-* `Company_Dim`
-
-These shared (conformed) dimensions ensure consistent reporting across both fact tables.
+* `Car_Dim` (includes denormalized company information)
+* `Driver_Dim` -||-
 
 ---
 
 ### Dimension relationships
 
-**Tracking_Fact** connects to:
+**Fact_Tracking** connects to:
 * Date_Dim (date_key)
 * Time_Dim (time_key)
-* Car_Dim (car_key)
-* Driver_Dim (driver_key)
-* Company_Dim (company_key)
+* Car_Dim (car_key) – includes denormalized company data
+* Driver_Dim (driver_key) – includes denormalized company data
 * TruckStatus_Dim (truck_status_key)
 
-**AppHealth_Fact** connects to:
+**Fact_Health** connects to:
 * Date_Dim (date_key)
 * Time_Dim (time_key)
-* Car_Dim (car_key)
-* Driver_Dim (driver_key)
-* Company_Dim (company_key)
-* Operator_Dim (operator_key)
+* Car_Dim (car_key) – includes denormalized company data
+* Driver_Dim (driver_key) – includes denormalized company data
 * Device_Dim (device_key)
-
----
