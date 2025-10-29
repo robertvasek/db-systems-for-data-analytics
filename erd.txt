@@ -1,7 +1,3 @@
-Here’s your version rewritten to match that exact structure and tone — concise, clean, and consistent in formatting and style for `erd.txt`:
-
----
-
 # Task C: Dimensional Model Description
 
 ![ERD of star schema](erd.png)
@@ -47,15 +43,15 @@ This table captures device and app performance metrics and allows analysis of re
 * **dim_date** – static calendar dimension with attributes such as year, month, day, and weekday indicators.
 * **dim_car** – vehicle attributes (license_plate, make, color, type, tonnage) with denormalized company data (company_name, city, country, region).
 * **dim_driver** – driver details including company assignment; can change over time (SCD2).
-* **dim_track_status** – decodes tracking codes (M, _, =, *, #, X, F) into human-readable states.
+* **dim_track_status** – decodes tracking codes (M, _, =, *, #, X, F).
 * **dim_device** – device metadata such as name or manufacturer; can change over time (SCD2).
 
 ---
 
 ### Degenerate dimensions
 
-* `pos_key` (for tracking)
-* `service_key` (for health)
+* `pos_key`
+* `service_key`
 
 ---
 
