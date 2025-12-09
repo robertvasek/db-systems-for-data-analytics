@@ -13,8 +13,11 @@ ORDER BY dr.name
 - Total time to execute: 0.147 seconds
 
 - Comment on idea of your select: 
-> optional if you feel so
- ...
+> Anomalous values
+>> There is UNKNOWN driver which has logged 2275 hours even though he only travelled ~871km. This could be mistake in data. Although we can have captured time in scenarios where the truct is not moving, this is uneven distribution even compared to other drivers. There is possibilty that when some error in the system happens, system switches to this driver and "idles" in some different state.
+>> Just worth mentioning is that there are name duplicities with different data (Jan, Michal, Miroslav,...) which is of course not necessarily anomaly, but also can be error when one driver is using some secondary account (the second driver with same name also has in a lot of cases just very small number of hours logged) which might have been created accidentally (depends if system allows it ofc). But still, worth mentioning.
+>> There are also different name formats (Josef, JOSEF, ...). Might be same case as in the previous point.
+>> Pavel has 0 hours and 0 km's travelled. He just might be new driver but his logging device might not be working. Worth mentioning because of this.
 
 - Output: 
 > paste the first 100 rows in plain text
