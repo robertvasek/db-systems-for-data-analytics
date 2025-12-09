@@ -1,0 +1,6 @@
+# Authors of home assignment (one line per student; overwrite values)
+- 536101, Vašek, Robert
+- 524638, Plhal, Jakub
+
+# IP address of your virtual machine (private one)
+172.26.9.253

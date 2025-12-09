@@ -1,0 +1,10 @@
+# Incremental ETL process
+
+- Total time to insert new data in staging: ... seconds
+
+[ETL incremental script](etl-incr.sql)
+
+
+- Comment on the ideas/steps used in the implementation:
+...
+
