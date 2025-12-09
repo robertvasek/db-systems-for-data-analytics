@@ -1,9 +1,16 @@
 # Query 1
 
-SELECT ....
+SELECT
+	dr.name AS driver_name,
+	SUM(tr.driving_time) / 3600 AS total_hours,
+	SUM(tr.distance) AS total_distance
+FROM fact_tracking tr
+INNER JOIN dim_driver dr ON tr.driver_id = dr.driver_id
+GROUP BY dr.driver_id, dr.name
+ORDER BY dr.name
 
 
-- Total time to execute: ... seconds
+- Total time to execute: 0.147 seconds
 
 - Comment on idea of your select: 
 > optional if you feel so
@@ -11,12 +18,63 @@ SELECT ....
 
 - Output: 
 > paste the first 100 rows in plain text
-> e.g.:
-> day   | version | conn_count
-> 01    | A60     | 503
-> ...
 
+"driver_name","total_hours","total_distance"
+"Adam","2774","23333.83"
+"BOHÁČ","365","2899.40"
+"Christoph","118","1421.76"
+"Ghiletchi","1270","7407.03"
+"Gujda","2119","17751.08"
+"Hasák","200","1912.97"
+"HOLEČEK","1234","17730.50"
+"Jakub","122","548.75"
+"Jan","135","1174.90"
+"Jan","3150","20815.67"
+"Jaroslav","2054","20757.88"
+"Josef","2313","11398.49"
+"JOSEF","2050","20932.17"
+"Junás","954","31734.06"
+"Lubomir","1042","39374.51"
+"Macek","61","483.97"
+"Marek","1150","23546.18"
+"Mario","339","17646.90"
+"Martin","66","930.52"
+"Michal","1343","13640.07"
+"Michal","1158","8439.40"
+"Miroslav","2628","24873.48"
+"Miroslav","7","79.14"
+"Němec","1295","21008.91"
+"Novák","1929","23013.02"
+"Pavel","0","0.00"
+"PETR","679","14365.10"
+"Radek","399","13154.93"
+"Radek","152","1718.79"
+"RADEK","794","19881.74"
+"Řehoř","1799","17235.65"
+"Roman","758","24635.41"
+"Rudolf","2322","19327.36"
+"Sprusansky","1127","9466.45"
+"TOBISCHKA","743","9541.86"
+"TOBISCHKA","185","3459.28"
+"UNKNOWN","2275","871.56"
+"VESELÝ","453","11425.15"
+"VOLODYMYR","1086","14347.32"
+"Vrnak","1796","17318.27"
+"ZÍTKO","45","596.43"
 
 - Explain:
-> paste plain-text output of "EXPLAIN ANALYSE SELECT ..." (do not modify this EXPLAIN by any modifier -- e.g., do not print as JSON!)
-
+"QUERY PLAN"
+"Sort  (cost=3749.94..3750.59 rows=260 width=262) (actual time=42.138..42.145 rows=41 loops=1)"
+"  Sort Key: dr.name"
+"  Sort Method: quicksort  Memory: 27kB"
+"  ->  HashAggregate  (cost=3735.61..3739.51 rows=260 width=262) (actual time=42.068..42.085 rows=41 loops=1)"
+"        Group Key: dr.driver_id"
+"        Batches: 1  Memory Usage: 61kB"
+"        ->  Hash Join  (cost=15.85..2943.22 rows=105652 width=232) (actual time=0.041..27.556 rows=105652 loops=1)"
+"              Hash Cond: (tr.driver_id = dr.driver_id)"
+"              ->  Seq Scan on fact_tracking tr  (cost=0.00..2645.52 rows=105652 width=14) (actual time=0.011..6.542 rows=105652 loops=1)"
+"              ->  Hash  (cost=12.60..12.60 rows=260 width=222) (actual time=0.021..0.023 rows=44 loops=1)"
+"                    Buckets: 1024  Batches: 1  Memory Usage: 10kB"
+"                    ->  Seq Scan on dim_driver dr  (cost=0.00..12.60 rows=260 width=222) (actual time=0.009..0.012 rows=44 loops=1)"
+"Planning Time: 0.344 ms"
+"Execution Time: 42.439 ms"
