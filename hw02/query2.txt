@@ -1,22 +1,154 @@
 # Query 2
 
-SELECT ....
+WITH pause_data AS (
+    SELECT 
+        driver_id, 
+        time::date AS pause_date, 
+        driving_time
+    FROM fact_tracking
+    WHERE truck_status IN ('_', '=')
+)
+SELECT 
+    d.name AS driver_name,
+    p.pause_date,
+    ROUND(SUM(p.driving_time) / 60.0, 2) AS total_pause_minutes
+FROM pause_data p
+JOIN dim_driver d ON p.driver_id = d.driver_id
+GROUP BY d.name, p.pause_date
+ORDER BY d.name, p.pause_date;
 
 
-- Total time to execute: ... seconds
+- Total time to execute:
+   Execution Time: 27.813 ms
+
 
 - Comment on idea of your select: 
 > optional if you feel so
  ...
 
 - Output: 
-> paste the first 100 rows in plain text
-> e.g.:
-> day   | version | conn_count
-> 01    | A60     | 503
-> ...
+driver_name | pause_date | total_pause_minutes 
+-------------+------------+---------------------
+ Adam        | 2025-01-06 |              226.25
+ Adam        | 2025-01-07 |              371.85
+ Adam        | 2025-01-08 |              480.85
+ Adam        | 2025-01-09 |              919.43
+ Adam        | 2025-01-10 |             1114.37
+ Adam        | 2025-01-13 |              380.50
+ Adam        | 2025-01-14 |             1059.78
+ Adam        | 2025-01-15 |             1351.13
+ Adam        | 2025-01-16 |              999.57
+ Adam        | 2025-01-17 |              899.95
+ Adam        | 2025-01-20 |             4349.15
+ Adam        | 2025-01-21 |              297.63
+ Adam        | 2025-01-22 |             1164.37
+ Adam        | 2025-01-23 |              340.03
+ Adam        | 2025-01-24 |             1054.60
+ Adam        | 2025-01-27 |             4045.97
+ Adam        | 2025-01-28 |             1005.35
+ Adam        | 2025-01-29 |             1092.65
+ Adam        | 2025-01-30 |              992.02
+ Adam        | 2025-01-31 |             1066.68
+ Adam        | 2025-02-03 |             3927.08
+ Adam        | 2025-02-04 |              909.45
+ Adam        | 2025-02-05 |              264.78
+ Adam        | 2025-02-06 |              197.85
+ Adam        | 2025-02-10 |              437.57
+ Adam        | 2025-02-11 |              309.82
+ Adam        | 2025-02-12 |               65.02
+ Adam        | 2025-02-13 |             1282.78
+ Adam        | 2025-02-14 |             1203.47
+ Adam        | 2025-02-17 |             3741.77
+ Adam        | 2025-02-18 |               59.58
+ Adam        | 2025-02-19 |             1775.35
+ Adam        | 2025-02-20 |              811.53
+ Adam        | 2025-02-21 |              248.00
+ Adam        | 2025-02-24 |              132.60
+ Adam        | 2025-02-25 |             7202.37
+ Adam        | 2025-02-26 |              149.03
+ Adam        | 2025-02-27 |             1319.08
+ Adam        | 2025-02-28 |             1104.18
+ Adam        | 2025-03-03 |             3775.98
+ Adam        | 2025-03-04 |              918.98
+ Adam        | 2025-03-05 |              397.13
+ Adam        | 2025-03-06 |             1152.10
+ Adam        | 2025-03-07 |              755.32
+ Adam        | 2025-03-10 |              408.42
+ Adam        | 2025-03-11 |             1214.55
+ Adam        | 2025-03-12 |              985.60
+ Adam        | 2025-03-13 |             1099.30
+ Adam        | 2025-03-14 |             1070.95
+ Adam        | 2025-03-17 |             4145.77
+ Adam        | 2025-03-18 |              162.72
+ Adam        | 2025-03-19 |             1027.78
+ Adam        | 2025-03-20 |              298.85
+ Adam        | 2025-03-24 |             5316.27
+ Adam        | 2025-03-25 |              387.43
+ Adam        | 2025-03-26 |               71.40
+ Adam        | 2025-03-27 |             1308.68
+ Adam        | 2025-03-28 |             1166.10
+ Adam        | 2025-03-31 |             3835.62
+ BOHÁČ       | 2025-03-11 |               41.93
+ BOHÁČ       | 2025-03-12 |              202.92
+ BOHÁČ       | 2025-03-13 |              936.75
+ BOHÁČ       | 2025-03-14 |                0.00
+ BOHÁČ       | 2025-03-15 |               41.85
+ BOHÁČ       | 2025-03-16 |              670.95
+ BOHÁČ       | 2025-03-17 |              267.02
+ BOHÁČ       | 2025-03-18 |              324.73
+ BOHÁČ       | 2025-03-19 |              300.28
+ BOHÁČ       | 2025-03-20 |              290.73
+ BOHÁČ       | 2025-03-21 |              225.98
+ BOHÁČ       | 2025-03-23 |              743.27
+ BOHÁČ       | 2025-03-24 |              109.05
+ BOHÁČ       | 2025-03-25 |              344.92
+ BOHÁČ       | 2025-03-26 |              208.43
+ BOHÁČ       | 2025-03-27 |              297.13
+ BOHÁČ       | 2025-03-28 |              126.37
+ BOHÁČ       | 2025-03-31 |              116.37
+ Christoph   | 2025-03-24 |             5226.78
+ Christoph   | 2025-03-25 |              834.95
+ Ghiletchi   | 2025-01-28 |              293.42
+ Ghiletchi   | 2025-01-29 |             1354.00
+ Ghiletchi   | 2025-01-30 |              917.83
+ Ghiletchi   | 2025-01-31 |              821.58
+ Ghiletchi   | 2025-02-01 |              189.00
+ Ghiletchi   | 2025-02-03 |             3471.00
+ Ghiletchi   | 2025-02-04 |              504.77
+ Ghiletchi   | 2025-02-05 |              609.12
+ Ghiletchi   | 2025-02-10 |              391.73
+ Ghiletchi   | 2025-02-12 |             2031.35
+ Ghiletchi   | 2025-02-13 |              900.98
+ Ghiletchi   | 2025-02-14 |             1117.67
+ Ghiletchi   | 2025-02-17 |             3659.77
+ Ghiletchi   | 2025-02-18 |              555.78
+ Ghiletchi   | 2025-02-19 |              714.63
+ Ghiletchi   | 2025-02-20 |             1097.27
+ Ghiletchi   | 2025-02-21 |             1309.32
+ Ghiletchi   | 2025-02-24 |             3652.05
+ Ghiletchi   | 2025-02-25 |              674.40
+ Ghiletchi   | 2025-02-26 |             1045.78
+ Ghiletchi   | 2025-02-27 |              832.33
+(100 rows)
+
 
 
 - Explain:
-> paste plain-text output of "EXPLAIN ANALYSE SELECT ..." (do not modify this EXPLAIN by any modifier -- e.g., do not print as JSON!)
-
+                                                             QUERY PLAN                                                              
+-------------------------------------------------------------------------------------------------------------------------------------
+ GroupAggregate  (cost=3630.06..3925.68 rows=9854 width=254) (actual time=25.356..27.168 rows=1389 loops=1)
+   Group Key: d.name, ((fact_tracking."time")::date)
+   ->  Sort  (cost=3630.06..3654.70 rows=9854 width=226) (actual time=25.338..25.702 rows=10041 loops=1)
+         Sort Key: d.name, ((fact_tracking."time")::date)
+         Sort Method: quicksort  Memory: 948kB
+         ->  Hash Join  (cost=15.85..2976.42 rows=9854 width=226) (actual time=0.055..18.474 rows=10041 loops=1)
+               Hash Cond: (fact_tracking.driver_id = d.driver_id)
+               ->  Seq Scan on fact_tracking  (cost=0.00..2909.65 rows=9854 width=16) (actual time=0.021..16.186 rows=10041 loops=1)
+                     Filter: (truck_status = ANY ('{_,=}'::bpchar[]))
+                     Rows Removed by Filter: 95611
+               ->  Hash  (cost=12.60..12.60 rows=260 width=222) (actual time=0.020..0.021 rows=44 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                     ->  Seq Scan on dim_driver d  (cost=0.00..12.60 rows=260 width=222) (actual time=0.007..0.011 rows=44 loops=1)
+ Planning Time: 0.299 ms
+ Execution Time: 27.363 ms
+(15 rows)
