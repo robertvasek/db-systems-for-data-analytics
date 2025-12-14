@@ -152,3 +152,10 @@ driver_name | pause_date | total_pause_minutes
  Planning Time: 0.299 ms
  Execution Time: 27.363 ms
 (15 rows)
+
+
+
+Special note for driver 75481 (Radek):
+Radek's data appears normal and compliant. On the recorded days, he worked between 200 and 500 minutes per day, with rest periods lasting up to ~16 hours.
+On 2025-03-31, the log shows a pause of 4,000 minutes. Since the previous log was three days prior, this likely represents a weekend rest period where the truck was parked. We found no NULL values for this driver.
+
