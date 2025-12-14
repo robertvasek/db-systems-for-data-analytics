@@ -1,10 +1,20 @@
 # Incremental ETL process
 
-- Total time to insert new data in staging: ... seconds
+- Total time to insert new data in staging: 0.85 seconds
 
 [ETL incremental script](etl-incr.sql)
 
 
 - Comment on the ideas/steps used in the implementation:
-...
+The incremental load was designed to respect Slowly Changing Dimensions (SCD Type 2) for the car updates while ensuring referential integrity for the new fact data.
 
+1. Dimension Date Handling: 
+   I queried the distinct dates from the new staging data (`import_tracking_upd`) and inserted only those that did not already exist in `dim_date`. This ensures that when we load the facts later, the `date_id` foreign key constraint is satisfied.
+
+2. Automatic SCD Type 2 Updates for Cars:
+   The updates were handled in two atomic steps within a transaction:
+   - Expiration: I joined `dim_car` with `staging.car_info_upd` on the natural key (`car_key`). Using `IS DISTINCT FROM`, I detected if any attribute (color, type, etc.) changed. If so, I "closed" the existing record by setting `valid_to` to '2025-04-01' and `current_row` to 'N'.
+   - Insertion: I inserted the rows from staging as the new "Active" versions (`current_row` = 'Y') with `valid_from` starting at '2025-04-01'.
+
+3. Fact Table Loading with Temporal Join:
+   When loading `fact_tracking`, finding the correct `car_id` was the most critical step. Instead of just joining on `car_key`, I joined on `car_key` AND checked that the trip `time` fell between the car's `valid_from` and `valid_to` dates. This ensures that trips occurring before April 1st link to the "old" car details, and trips after April 1st link to the "new" car details.
