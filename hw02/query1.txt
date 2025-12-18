@@ -10,7 +10,7 @@ GROUP BY dr.driver_id, dr.name
 ORDER BY dr.name
 
 
-- Total time to execute: 0.147 seconds
+- Total time to execute: 0.147 s
 
 - Comment on idea of your select: 
 > Anomalous values
