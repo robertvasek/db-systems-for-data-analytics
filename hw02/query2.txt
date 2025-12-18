@@ -1,29 +1,44 @@
 # Query 2
 
-WITH PairedEvents AS (
+WITH RawPauses AS (
     SELECT
-        d.name AS driver_name,
-        f.time,
-        f.truck_status,
-        LAG(f.time) OVER (PARTITION BY f.driver_id ORDER BY f.time) AS start_time,
-        LAG(f.truck_status) OVER (PARTITION BY f.driver_id ORDER BY f.time) AS prev_status
-    FROM public.fact_tracking f
-    JOIN public.dim_driver d ON f.driver_id = d.driver_id
-    WHERE f.truck_status IN ('_', '=')
+        driver_id,
+        time AS end_time,
+        LAG(time) OVER (PARTITION BY driver_id ORDER BY time) AS start_time,
+        truck_status,
+        LAG(truck_status) OVER (PARTITION BY driver_id ORDER BY time) AS prev_status
+    FROM public.fact_tracking
+    WHERE truck_status IN ('_', '=')
+),
+ValidPauses AS (
+    SELECT
+        driver_id,
+        start_time,
+        end_time
+    FROM RawPauses
+    WHERE truck_status = '=' AND prev_status = '_'
 )
 SELECT
-    driver_name,
-    start_time::date AS date,
-    SUM(time - start_time) AS total_pause_minutes
-FROM PairedEvents
-WHERE truck_status = '='
-  AND prev_status = '_'
-GROUP BY driver_name, start_time::date
-ORDER BY driver_name, date;
+    d.name AS driver_name,
+    split.day_series::date AS pause_date,
+    ROUND(SUM(EXTRACT(EPOCH FROM (
+        LEAST(vp.end_time, split.day_series + interval '1 day')
+        -
+        GREATEST(vp.start_time, split.day_series)
+    )) / 60.0), 2) AS total_pause_minutes
+FROM ValidPauses vp
+JOIN public.dim_driver d ON vp.driver_id = d.driver_id
+CROSS JOIN LATERAL GENERATE_SERIES(
+    DATE_TRUNC('day', vp.start_time),
+    DATE_TRUNC('day', vp.end_time),
+    interval '1 day'
+) AS split(day_series)
+GROUP BY d.name, split.day_series::date
+ORDER BY d.name, pause_date;
 
 
 - Total time to execute:
-   Execution Time: 0.115 s
+   Execution Time: 0.363 s
 
 
 - Comment on idea of your select: 
@@ -137,28 +152,30 @@ Jaroslav   |2025-01-15|           00:48:59|
 - Explain:
                                                              QUERY PLAN                                                              
 -------------------------------------------------------------------------------------------------------------------------------------
-GroupAggregate  (cost=3995.23..3995.33 rows=4 width=238) (actual time=25.023..25.191 rows=416 loops=1)
-  Group Key: pairedevents.driver_name, ((pairedevents.start_time)::date)
-  ->  Sort  (cost=3995.23..3995.24 rows=4 width=238) (actual time=25.014..25.032 rows=493 loops=1)
-        Sort Key: pairedevents.driver_name, ((pairedevents.start_time)::date)
-        Sort Method: quicksort  Memory: 59kB
-        ->  Subquery Scan on pairedevents  (cost=3623.81..3995.19 rows=4 width=238) (actual time=19.176..24.701 rows=493 loops=1)
-              Filter: ((pairedevents.truck_status = '='::bpchar) AND (pairedevents.prev_status = '_'::bpchar))
-              Rows Removed by Filter: 9548
-              ->  WindowAgg  (cost=3623.81..3846.63 rows=9903 width=272) (actual time=19.166..23.945 rows=10041 loops=1)
-                    ->  Sort  (cost=3623.81..3648.57 rows=9903 width=232) (actual time=19.154..19.516 rows=10041 loops=1)
-                          Sort Key: f.driver_id, f."time"
-                          Sort Method: quicksort  Memory: 1014kB
-                          ->  Hash Join  (cost=15.85..2966.57 rows=9903 width=232) (actual time=0.030..15.547 rows=10041 loops=1)
-                                Hash Cond: (f.driver_id = d.driver_id)
-                                ->  Seq Scan on fact_tracking f  (cost=0.00..2924.30 rows=9903 width=14) (actual time=0.010..14.182 rows=10041 loops=1)
-                                      Filter: (truck_status = ANY ('{_,=}'::bpchar[]))
-                                      Rows Removed by Filter: 95611
-                                ->  Hash  (cost=12.60..12.60 rows=260 width=222) (actual time=0.014..0.015 rows=44 loops=1)
-                                      Buckets: 1024  Batches: 1  Memory Usage: 10kB
-                                      ->  Seq Scan on dim_driver d  (cost=0.00..12.60 rows=260 width=222) (actual time=0.004..0.007 rows=44 loops=1)
-Planning Time: 0.219 ms
-Execution Time: 25.271 ms
+GroupAggregate  (cost=4298.09..4468.09 rows=4000 width=254) (actual time=24.184..24.855 rows=711 loops=1)
+  Group Key: d.name, ((split.day_series)::date)
+  ->  Sort  (cost=4298.09..4308.09 rows=4000 width=246) (actual time=24.170..24.201 rows=829 loops=1)
+        Sort Key: d.name, ((split.day_series)::date)
+        Sort Method: quicksort  Memory: 89kB
+        ->  Nested Loop  (cost=3597.40..4058.78 rows=4000 width=246) (actual time=17.177..23.618 rows=829 loops=1)
+              ->  Hash Join  (cost=3597.39..3968.77 rows=4 width=234) (actual time=17.162..22.942 rows=493 loops=1)
+                    Hash Cond: (rawpauses.driver_id = d.driver_id)
+                    ->  Subquery Scan on rawpauses  (cost=3581.54..3952.91 rows=4 width=20) (actual time=17.134..22.840 rows=493 loops=1)
+                          Filter: ((rawpauses.truck_status = '='::bpchar) AND (rawpauses.prev_status = '_'::bpchar))
+                          Rows Removed by Filter: 9548
+                          ->  WindowAgg  (cost=3581.54..3804.36 rows=9903 width=54) (actual time=17.126..22.142 rows=10041 loops=1)
+                                ->  Sort  (cost=3581.54..3606.30 rows=9903 width=14) (actual time=17.114..17.498 rows=10041 loops=1)
+                                      Sort Key: fact_tracking.driver_id, fact_tracking."time"
+                                      Sort Method: quicksort  Memory: 1012kB
+                                      ->  Seq Scan on fact_tracking  (cost=0.00..2924.30 rows=9903 width=14) (actual time=0.004..13.763 rows=10041 loops=1)
+                                            Filter: (truck_status = ANY ('{_,=}'::bpchar[]))
+                                            Rows Removed by Filter: 95611
+                    ->  Hash  (cost=12.60..12.60 rows=260 width=222) (actual time=0.019..0.019 rows=44 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                          ->  Seq Scan on dim_driver d  (cost=0.00..12.60 rows=260 width=222) (actual time=0.009..0.013 rows=44 loops=1)
+              ->  Function Scan on generate_series split  (cost=0.01..10.01 rows=1000 width=8) (actual time=0.001..0.001 rows=2 loops=493)
+Planning Time: 0.252 ms
+Execution Time: 24.962 ms
 
 
 
