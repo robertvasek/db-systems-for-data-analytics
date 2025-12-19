@@ -1,67 +1,62 @@
 BEGIN;
 
--- -----------------------------------------------------------------------------
--- Step 1a: Update dim_date
--- -----------------------------------------------------------------------------
-INSERT INTO public.dim_date (date_id, day, month, year, quarter, day_of_week, date)
-SELECT DISTINCT 
-    TO_CHAR(s."time", 'YYYYMMDD')::integer,
-    EXTRACT(DAY FROM s."time"),
-    EXTRACT(MONTH FROM s."time"),
-    EXTRACT(YEAR FROM s."time"),
-    EXTRACT(QUARTER FROM s."time"),
-    EXTRACT(ISODOW FROM s."time"),
-    s."time"::date
-FROM staging.import_tracking_upd s
+
+INSERT INTO public.dim_date (day, month, year, quarter, day_of_week, date)
+SELECT DISTINCT
+    EXTRACT(DAY FROM tu.time)::integer,
+    EXTRACT(MONTH FROM tu.time)::integer,
+    EXTRACT(YEAR FROM tu.time)::integer,
+    EXTRACT(QUARTER FROM tu.time)::integer,
+    EXTRACT(ISODOW FROM tu.time)::integer,
+    tu.time::date as date
+FROM staging.import_tracking_upd tu
 WHERE NOT EXISTS (
-    SELECT 1 FROM public.dim_date d WHERE d.date_id = TO_CHAR(s."time", 'YYYYMMDD')::integer
+    SELECT 1 FROM public.dim_date d WHERE d.date = tu.time::date
 );
 
--- -----------------------------------------------------------------------------
--- Step 1b: Update dim_car (Expire old records)
--- -----------------------------------------------------------------------------
+-- ------------------
+
 UPDATE public.dim_car d
 SET 
-    valid_to = '2025-04-01 00:00:00',
-    current_row = 'N'
-FROM staging.car_info_upd s
-WHERE d.car_key = s.car_key 
-  AND d.current_row = 'Y'
+    valid_to = '2025-04-01 00:00:00'::timestamp,
+    current_row = 'inactive'
+FROM staging.car_info_upd cu
+WHERE d.car_key = cu.car_key
+  AND d.current_row = 'active'
   AND (
-       d.license_plate IS DISTINCT FROM s.license_plate OR
-       d.make          IS DISTINCT FROM s.make OR
-       d.color         IS DISTINCT FROM s.color OR
-       d.tonnage       IS DISTINCT FROM s.tonnage::real OR 
-       d.type          IS DISTINCT FROM s.type
+       d.company_key   IS DISTINCT FROM cu.company_key OR
+       d.license_plate IS DISTINCT FROM COALESCE(NULLIF(cu.license_plate, ''), 'UNKNOWN') OR
+       d.make          IS DISTINCT FROM COALESCE(NULLIF(cu.make, ''), 'UNKNOWN') OR
+       d.color         IS DISTINCT FROM COALESCE(NULLIF(cu.color, ''), 'UNKNOWN') OR
+       d.tonnage       IS DISTINCT FROM cu.tonnage::real OR
+       d.type          IS DISTINCT FROM COALESCE(NULLIF(cu.type, ''), 'UNKNOWN')
   );
 
--- -----------------------------------------------------------------------------
--- Step 1c: Update dim_car (Insert new versions)
--- -----------------------------------------------------------------------------
+-- ------------------
+
 INSERT INTO public.dim_car (
     car_key, company_key, license_plate, make, color, tonnage, type, 
     valid_from, valid_to, current_row
 )
 SELECT 
-    s.car_key, 
-    s.company_key, 
-    s.license_plate, 
-    s.make, 
-    s.color, 
-    s.tonnage::real, 
-    s.type,
+    cu.car_key,
+    cu.company_key,
+    COALESCE(NULLIF(cu.license_plate, ''), 'UNKNOWN') AS license_plate,
+    COALESCE(NULLIF(cu.make, ''), 'UNKNOWN') AS make,
+    COALESCE(NULLIF(cu.color, ''), 'UNKNOWN') AS color,
+    cu.tonnage::real,
+    COALESCE(NULLIF(cu.type, ''), 'UNKNOWN') AS type,
     '2025-04-01 00:00:00'::timestamp,
-    '9999-12-31 00:00:00'::timestamp,
-    'Y'
-FROM staging.car_info_upd s
+    'infinity'::timestamp,
+    'active'
+FROM staging.car_info_upd cu
 WHERE NOT EXISTS (
     SELECT 1 FROM public.dim_car d 
-    WHERE d.car_key = s.car_key AND d.current_row = 'Y'
+    WHERE d.car_key = cu.car_key AND d.current_row = 'active'
 );
 
--- -----------------------------------------------------------------------------
--- Step 2: Insert new facts
--- -----------------------------------------------------------------------------
+-- ------------------
+
 INSERT INTO public.fact_tracking (
     company_id, car_id, driver_id, time_id, date_id, 
     pos_key, "time", truck_status, pos_gps, speed, distance, driving_time
@@ -88,11 +83,11 @@ JOIN public.dim_car c
 -- JOIN 2: Find the Company (Changed to INNER JOIN to enforce NOT NULL)
 JOIN public.dim_company co 
     ON c.company_key = co.company_key 
-    AND co.current_row = 'Y'
+    AND co.current_row = 'active'
 -- JOIN 3: Find the Driver (Changed to INNER JOIN to avoid NULL driver_ids)
 JOIN public.dim_driver d 
     ON s.driver_key = d.driver_key  
-    AND d.current_row = 'Y'
+    AND d.current_row = 'active'
 -- JOIN 4: Find the Date
 JOIN public.dim_date dt 
     ON TO_CHAR(s."time", 'YYYYMMDD')::integer = dt.date_id
