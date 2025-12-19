@@ -38,7 +38,7 @@ INSERT INTO public.dim_car (
     car_key, company_key, license_plate, make, color, tonnage, type, 
     valid_from, valid_to, current_row
 )
-SELECT 
+SELECT
     cu.car_key,
     cu.company_key,
     COALESCE(NULLIF(cu.license_plate, ''), 'UNKNOWN') AS license_plate,
@@ -61,44 +61,56 @@ INSERT INTO public.fact_tracking (
     company_id, car_id, driver_id, time_id, date_id, 
     pos_key, "time", truck_status, pos_gps, speed, distance, driving_time
 )
-SELECT 
-    co.company_id,
-    c.car_id,        
-    d.driver_id,
-    t.time_id,
-    dt.date_id,
-    s.pos_key,
-    s."time",
-    s.truck_status,
-    s.pos_gps,
-    s.speed::numeric,       
-    s.distance::numeric,    
-    s.driving_time::integer 
-FROM staging.import_tracking_upd s
--- JOIN 1: Find the Car (SCD Logic)
-JOIN public.dim_car c 
-    ON s.car_key = c.car_key 
-    AND s."time" >= c.valid_from 
-    AND s."time" < c.valid_to
--- JOIN 2: Find the Company (Changed to INNER JOIN to enforce NOT NULL)
-JOIN public.dim_company co 
-    ON c.company_key = co.company_key 
-    AND co.current_row = 'active'
--- JOIN 3: Find the Driver (Changed to INNER JOIN to avoid NULL driver_ids)
-JOIN public.dim_driver d 
-    ON s.driver_key = d.driver_key  
-    AND d.current_row = 'active'
--- JOIN 4: Find the Date
-JOIN public.dim_date dt 
-    ON TO_CHAR(s."time", 'YYYYMMDD')::integer = dt.date_id
--- JOIN 5: Find the Time
-JOIN public.dim_time t 
-    ON EXTRACT(HOUR FROM s."time") = t.hour
-    AND EXTRACT(MINUTE FROM s."time") = t.minute
-    AND EXTRACT(SECOND FROM s."time") = t.second
+SELECT DISTINCT ON (dcp.company_id, dca.car_id, ddr.driver_id, dti.time_id, dda.date_id)
+    dcp.company_id,
+    dca.car_id,
+    ddr.driver_id,
+    dti.time_id,
+    dda.date_id,
+    itu.pos_key,
+    itu.time,
+    itu.truck_status,
+    itu.pos_gps,
+    itu.speed::numeric,
+    itu.distance::numeric,
+    itu.driving_time::integer
+FROM staging.import_tracking_upd itu
+
+JOIN public.dim_date dda
+    ON dda.date = itu.time::date
+
+JOIN public.dim_car dca
+    ON dca.car_key = itu.car_key
+    AND itu.time >= dca.valid_from
+    AND itu.time < dca.valid_to
+
+JOIN public.dim_company dcp
+    ON dcp.company_key = dca.company_key
+
+JOIN public.dim_driver ddr
+    ON ddr.driver_key = itu.driver_key
+
+JOIN public.dim_time dti
+    ON EXTRACT(HOUR FROM itu.time) = dti.hour
+    AND EXTRACT(MINUTE FROM itu.time) = dti.minute
+    AND EXTRACT(SECOND FROM itu.time) = dti.second
+
 WHERE NOT EXISTS (
-    SELECT 1 FROM public.fact_tracking f 
-    WHERE f.pos_key = s.pos_key AND f."time" = s."time"
-);
+    SELECT 1 FROM public.fact_tracking ftr
+    WHERE ftr.company_id = dcp.company_id
+      AND ftr.car_id     = dca.car_id
+      AND ftr.driver_id  = ddr.driver_id
+      AND ftr.time_id    = dti.time_id
+      AND ftr.date_id    = dda.date_id
+)
+ORDER BY
+    dcp.company_id,
+    dca.car_id,
+    ddr.driver_id,
+    dti.time_id,
+    dda.date_id,
+    itu.pos_key DESC;
+
+
 
 COMMIT;
