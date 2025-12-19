@@ -1,6 +1,50 @@
 # Query Car
 
-SELECT ....
+SELECT
+    TO_CHAR(dd.date, 'YYYY/MM/DD') AS date,
+    dc.license_plate,
+    dcp.company,
+    -- coalesce converts nulls (days with no driving) into 0
+    COALESCE(
+        ROUND(
+            EXTRACT(EPOCH FROM (MAX(ft.time) - MIN(ft.time)))::numeric / 3600,
+            2
+        ),
+        0
+    ) AS duty_cycle_hours
+FROM public.dim_date dd
+
+-- 1. find the correct version of the car for each day (handling history)
+JOIN public.dim_car dc
+    ON dd.date >= dc.valid_from
+    AND (dd.date < dc.valid_to OR dc.valid_to IS NULL)
+
+-- 2. get the company name
+JOIN public.dim_company dcp
+    ON dc.company_key = dcp.company_key
+
+-- 3. left join keeps the day even if no tracking data exists
+LEFT JOIN public.fact_tracking ft
+    ON ft.car_id = dc.car_id
+    AND ft.date_id = dd.date_id
+    AND ft.truck_status = 'M'  -- only count moving status
+
+WHERE
+    dd.year = 2025
+    AND dd.month IN (3, 4)
+    -- find the car by its permanent key so we track it across updates
+    AND dc.car_key IN (
+        SELECT DISTINCT car_key
+        FROM public.dim_car
+        WHERE license_plate = 'B66-0FV5375'
+    )
+
+GROUP BY
+    dd.date,
+    dc.license_plate,
+    dcp.company
+ORDER BY
+    dd.date ASC;
 
 
 - Total time to execute: ... seconds
