@@ -1,65 +1,152 @@
 # Query Car
 
 SELECT
-    TO_CHAR(dd.date, 'YYYY/MM/DD') AS date,
-    dc.license_plate,
-    dcp.company,
-    -- coalesce converts nulls (days with no driving) into 0
+    TO_CHAR(dda.date, 'YYYY/MM/DD') AS date,
+    dca.license_plate,
+    dco.company,
     COALESCE(
         ROUND(
-            EXTRACT(EPOCH FROM (MAX(ft.time) - MIN(ft.time)))::numeric / 3600,
+			EXTRACT(EPOCH FROM (MAX(ftr.time) - MIN(ftr.time)))::numeric / 3600,
             2
-        ),
-        0
-    ) AS duty_cycle_hours
-FROM public.dim_date dd
+        ), 0) AS duty_cycle_hours
+FROM public.dim_date dda
 
--- 1. find the correct version of the car for each day (handling history)
-JOIN public.dim_car dc
-    ON dd.date >= dc.valid_from
-    AND (dd.date < dc.valid_to OR dc.valid_to IS NULL)
+JOIN public.dim_car dca
+    ON dda.date >= dca.valid_from
+    AND dda.date < dca.valid_to
 
--- 2. get the company name
-JOIN public.dim_company dcp
-    ON dc.company_key = dcp.company_key
+JOIN public.dim_company dco
+    ON dca.company_key = dco.company_key
 
--- 3. left join keeps the day even if no tracking data exists
-LEFT JOIN public.fact_tracking ft
-    ON ft.car_id = dc.car_id
-    AND ft.date_id = dd.date_id
-    AND ft.truck_status = 'M'  -- only count moving status
+LEFT JOIN public.fact_tracking ftr
+    ON ftr.car_id = dca.car_id
+    AND ftr.date_id = dda.date_id
+    AND ftr.truck_status = 'M'
 
 WHERE
-    dd.year = 2025
-    AND dd.month IN (3, 4)
-    -- find the car by its permanent key so we track it across updates
-    AND dc.car_key IN (
+    dda.year = 2025
+    AND dda.month IN (3, 4)
+    AND dca.car_key IN (
         SELECT DISTINCT car_key
         FROM public.dim_car
         WHERE license_plate = 'B66-0FV5375'
     )
 
 GROUP BY
-    dd.date,
-    dc.license_plate,
-    dcp.company
+    dda.date,
+    dca.license_plate,
+    dco.company
 ORDER BY
-    dd.date ASC;
+    dda.date ASC;
 
 
-- Total time to execute: ... seconds
+- Total time to execute: 0.129 seconds
 
 - Comment on idea of your select: 
-> optional if you feel so
- ...
+> we can see that the car was not used at all at the beginning of the March
+> (the first time it was used was on 24th March). then we can see regular usage :)
 
 - Output: 
 > paste the first 100 rows in plain text
-> e.g.:
 > date       | license_plate | company             | duty_cycle_hours
-> ...
-> 2023-01-02 | 8F98112       | EagleEye Transports |              5.5
-> ...
+date,"license_plate","company","duty_cycle_hours"
+2025/03/01,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/02,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/03,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/04,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/05,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/06,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/07,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/08,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/09,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/10,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/11,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/12,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/13,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/14,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/15,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/16,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/17,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/18,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/19,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/20,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/21,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/22,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/23,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/24,"B66-0FV5375","SwiftCargo Express","6.23"
+2025/03/25,"B66-0FV5375","SwiftCargo Express","9.64"
+2025/03/26,"B66-0FV5375","SwiftCargo Express","8.36"
+2025/03/27,"B66-0FV5375","SwiftCargo Express","11.66"
+2025/03/28,"B66-0FV5375","SwiftCargo Express","7.12"
+2025/03/29,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/30,"B66-0FV5375","SwiftCargo Express","0"
+2025/03/31,"B66-0FV5375","SwiftCargo Express","11.09"
+2025/04/01,"B66-0FV5375","SwiftCargo Express","9.88"
+2025/04/02,"B66-0FV5375","SwiftCargo Express","10.17"
+2025/04/03,"B66-0FV5375","SwiftCargo Express","10.63"
+2025/04/04,"B66-0FV5375","SwiftCargo Express","7.67"
+2025/04/05,"B66-0FV5375","SwiftCargo Express","0"
+2025/04/06,"B66-0FV5375","SwiftCargo Express","0"
+2025/04/07,"B66-0FV5375","SwiftCargo Express","11.58"
+2025/04/08,"B66-0FV5375","SwiftCargo Express","11.22"
+2025/04/09,"B66-0FV5375","SwiftCargo Express","9.61"
+2025/04/10,"B66-0FV5375","SwiftCargo Express","9.74"
+2025/04/11,"B66-0FV5375","SwiftCargo Express","10.81"
+2025/04/12,"B66-0FV5375","SwiftCargo Express","0"
+2025/04/13,"B66-0FV5375","SwiftCargo Express","0"
+2025/04/14,"B66-0FV5375","SwiftCargo Express","11.48"
+2025/04/15,"B66-0FV5375","SwiftCargo Express","7.79"
+2025/04/16,"B66-0FV5375","SwiftCargo Express","7.91"
+2025/04/17,"B66-0FV5375","SwiftCargo Express","9.68"
+2025/04/18,"B66-0FV5375","SwiftCargo Express","0"
+2025/04/19,"B66-0FV5375","SwiftCargo Express","0"
+2025/04/20,"B66-0FV5375","SwiftCargo Express","0"
+2025/04/21,"B66-0FV5375","SwiftCargo Express","0"
+2025/04/22,"B66-0FV5375","SwiftCargo Express","10.10"
+2025/04/23,"B66-0FV5375","SwiftCargo Express","8.72"
+2025/04/24,"B66-0FV5375","SwiftCargo Express","0"
+2025/04/25,"B66-0FV5375","SwiftCargo Express","7.36"
+2025/04/26,"B66-0FV5375","SwiftCargo Express","0"
+2025/04/27,"B66-0FV5375","SwiftCargo Express","0"
+2025/04/28,"B66-0FV5375","SwiftCargo Express","14.34"
+2025/04/29,"B66-0FV5375","SwiftCargo Express","9.44"
+2025/04/30,"B66-0FV5375","SwiftCargo Express","11.11"
 
 - Explain:
-> paste plain-text output of "EXPLAIN ANALYSE SELECT ..." (do not modify this EXPLAIN by any modifier -- e.g., do not print as JSON!)
+QUERY PLAN
+GroupAggregate  (cost=5036.57..5037.45 rows=22 width=344) (actual time=25.383..25.727 rows=61 loops=1)
+  Group Key: dda.date, dca.license_plate, dco.company
+  ->  Sort  (cost=5036.57..5036.62 rows=22 width=288) (actual time=25.369..25.435 rows=1711 loops=1)
+        Sort Key: dda.date, dca.license_plate, dco.company
+        Sort Method: quicksort  Memory: 195kB
+        ->  Hash Right Join  (cost=41.88..5036.07 rows=22 width=288) (actual time=0.593..24.941 rows=1711 loops=1)
+              Hash Cond: ((ftr.car_id = dca.car_id) AND (ftr.date_id = dda.date_id))
+              ->  Seq Scan on fact_tracking ftr  (cost=0.00..4052.04 rows=125594 width=16) (actual time=0.004..17.300 rows=125391 loops=1)
+                    Filter: (truck_status = 'M'::bpchar)
+                    Rows Removed by Filter: 21652
+              ->  Hash  (cost=41.81..41.81 rows=5 width=288) (actual time=0.087..0.092 rows=61 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 13kB
+                    ->  Nested Loop  (cost=24.33..41.81 rows=5 width=288) (actual time=0.059..0.081 rows=61 loops=1)
+                          Join Filter: ((dda.date >= dca.valid_from) AND (dda.date < dca.valid_to))
+                          ->  Hash Join  (cost=24.33..36.13 rows=1 width=296) (actual time=0.048..0.053 rows=1 loops=1)
+                                Hash Cond: (dco.company_key = dca.company_key)
+                                ->  Seq Scan on dim_company dco  (cost=0.00..11.30 rows=130 width=222) (actual time=0.005..0.006 rows=7 loops=1)
+                                ->  Hash  (cost=24.32..24.32 rows=1 width=82) (actual time=0.037..0.040 rows=1 loops=1)
+                                      Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                      ->  Hash Join  (cost=12.16..24.32 rows=1 width=82) (actual time=0.031..0.038 rows=1 loops=1)
+                                            Hash Cond: (dca.car_key = dim_car.car_key)
+                                            ->  Seq Scan on dim_car dca  (cost=0.00..11.70 rows=170 width=86) (actual time=0.004..0.006 rows=39 loops=1)
+                                            ->  Hash  (cost=12.15..12.15 rows=1 width=4) (actual time=0.023..0.024 rows=1 loops=1)
+                                                  Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                                  ->  Unique  (cost=12.13..12.14 rows=1 width=4) (actual time=0.021..0.022 rows=1 loops=1)
+                                                        ->  Sort  (cost=12.13..12.14 rows=1 width=4) (actual time=0.020..0.021 rows=1 loops=1)
+                                                              Sort Key: dim_car.car_key
+                                                              Sort Method: quicksort  Memory: 25kB
+                                                              ->  Seq Scan on dim_car  (cost=0.00..12.12 rows=1 width=4) (actual time=0.003..0.006 rows=1 loops=1)
+                                                                    Filter: ((license_plate)::text = 'B66-0FV5375'::text)
+                                                                    Rows Removed by Filter: 38
+                          ->  Seq Scan on dim_date dda  (cost=0.00..4.73 rows=63 width=8) (actual time=0.009..0.018 rows=61 loops=1)
+                                Filter: ((month = ANY ('{3,4}'::integer[])) AND (year = 2025))
+                                Rows Removed by Filter: 60
+Planning Time: 0.366 ms
+Execution Time: 25.779 ms
