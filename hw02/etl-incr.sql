@@ -112,5 +112,4 @@ ORDER BY
     itu.pos_key DESC;
 
 
-
 COMMIT;
